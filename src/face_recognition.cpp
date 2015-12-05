@@ -3,6 +3,7 @@
 #include "opencv2/objdetect/objdetect.hpp"
 #include <iostream>
 #include <cstdlib>
+#include "opencv2/imgproc/imgproc.hpp" //To Image Processing
 
 
 using namespace cv;
@@ -15,8 +16,34 @@ int main(int argc, char *argv[])
     VideoCapture camera;
 
     //OpenCV image object
-    Mat image;
-    Mat img;
+    Mat image; //Original image
+    Mat img;   //Cloned image
+    Mat gray; //Used when convert image to gray 
+
+    //Load Hat and Moustache pictures
+    Mat hat = imread("../img/hat.png"); // load hat picture with aplpha channel
+    Mat hat_resized; //hat image once resized
+    Mat moustache = imread("../img/moustache.png"); // load moustache picture with aplpha channel
+    Mat moustache_resized; //moustache image once resized
+
+    //Define 3 variables to get pixels combination on hat and ,oustache fussion
+    double color_pixel_0, color_pixel_1, color_pixel_2;
+
+
+    if(! hat.data ) // Check for invalid input image 
+    {
+        cout <<  "Could not open or find the image <- hat.png ->" << endl ;
+        return -1;
+    }
+
+    if(! moustache.data ) // Check for invalid input image 
+    {
+        cout <<  "Could not open or find the image <- moustache.png ->" << endl ;
+        return -1;
+    }
+
+
+
 
     //Initialize face detector object
     CascadeClassifier face_detect;
@@ -65,14 +92,12 @@ int main(int argc, char *argv[])
     	img = image.clone();
 
 	// Convert the current frame to grayscale:
-        Mat gray;
         cvtColor(img, gray, CV_BGR2GRAY);
 
 	
 	//Detect faces as rectangles
 	vector< Rect_<int> > faces;
     	face_detect.detectMultiScale(gray, faces);
-	
 	
 
 	//For each detected face...
@@ -86,8 +111,42 @@ int main(int argc, char *argv[])
 	    // Write all we've found out to the original image!
             // First of all draw a green rectangle around the detected face:
             rectangle(img, face_i, CV_RGB(0, 255,0), 1);
+	    
+	    
+            //Add hat and moustache to picture
+	    int facew = face_i.width; //face width
+	    int faceh = face_i.height; //face height
+	    Size hat_size(facew,faceh); //resize hat picture giving same face width 
+        resize(hat, hat_resized, hat_size );
 
 
+	    //Overlay hat and moustache
+        for ( int j = 0; j < faceh ; j++)
+	    {
+                for ( int k = 0; k < facew; k++)
+                {
+
+
+                    // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
+                    double alpha = hat_resized.at<cv::Vec3b>(j, k)[3] / 255.0;
+                    color_pixel_0 = (hat_resized.at<cv::Vec3b>(j, k)[0] * (alpha)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[0])* (1.0-alpha));
+                    color_pixel_1 = (hat_resized.at<cv::Vec3b>(j, k)[1] * (alpha)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[1])* (1.0-alpha));
+                    color_pixel_2 = (hat_resized.at<cv::Vec3b>(j, k)[2] * (alpha)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[2])* (1.0-alpha));
+
+                    if((face_i.y +j-(faceh*0.60))>0){
+                        img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[0] = color_pixel_0 ;
+                        img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[1] = color_pixel_1 ;
+                        img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[2] = color_pixel_2 ;
+                    }
+
+
+                }
+	    	
+         }
+	    
+	    
+
+		
 	}
 	
 	
