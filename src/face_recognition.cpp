@@ -97,11 +97,13 @@ int main(int argc, char *argv[])
 
 	// Convert the current frame to grayscale:
         cvtColor(img, gray, CV_BGR2GRAY);
+        equalizeHist(gray,gray); //This algorithm normalizes the brightness and increases the contrast of the image
 
 	
 	//Detect faces as rectangles
 	vector< Rect_<int> > faces;
     	face_detect.detectMultiScale(gray, faces);
+
 	
 
 	//For each detected face...
@@ -110,11 +112,10 @@ int main(int argc, char *argv[])
 		
 	    // Process face by face:
             Rect face_i = faces[i];
-            // Crop the face from the image. So simple with OpenCV C++:
-            Mat face = gray(face_i);
+
 	    // Write all we've found out to the original image!
             // First of all draw a green rectangle around the detected face:
-            //rectangle(img, face_i, CV_RGB(0, 255,0), 1);
+            //rectangle(img, face_i, CV_RGB(0, 255,0), 1); //Commented for show only hat and moustache
 	    
 	    
             //Add hat and moustache to picture
