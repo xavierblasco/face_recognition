@@ -48,7 +48,10 @@ int main(int argc, char *argv[])
 
     //Initialize face detector object
     CascadeClassifier face_detect;
-    face_detect.load("../data/haarcascades/haarcascade_frontalface_default.xml");
+    //face_detect.load("../data/haarcascades/haarcascade_frontalface_default.xml");
+    //face_detect.load("../data/lbpcascades/lbpcascade_frontalcatface.xml"); //This one works worse than haarcascade_frontalface_default.xml
+    face_detect.load("../data/lbpcascades/lbpcascade_frontalface.xml"); //This one is FASTER than haarcascade and has less noise
+    //face_detect.load("../data/lbpcascades/lbpcascade_profileface.xml"); //This is for profile faces
 
     //camera id . Associated to device number in /dev/videoX
     int cam_id; 
@@ -111,7 +114,7 @@ int main(int argc, char *argv[])
             Mat face = gray(face_i);
 	    // Write all we've found out to the original image!
             // First of all draw a green rectangle around the detected face:
-            rectangle(img, face_i, CV_RGB(0, 255,0), 1);
+            //rectangle(img, face_i, CV_RGB(0, 255,0), 1);
 	    
 	    
             //Add hat and moustache to picture
