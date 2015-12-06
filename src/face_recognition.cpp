@@ -21,13 +21,14 @@ int main(int argc, char *argv[])
     Mat gray; //Used when convert image to gray 
 
     //Load Hat and Moustache pictures
-    Mat hat = imread("../img/hat.png"); // load hat picture with aplpha channel
+    Mat hat = imread("../img/hat.png", -1); // load hat picture with aplpha channel
     Mat hat_resized; //hat image once resized
-    Mat moustache = imread("../img/moustache.png"); // load moustache picture with aplpha channel
+    Mat moustache = imread("../img/moustache.png", -1); // load moustache picture with aplpha channel
     Mat moustache_resized; //moustache image once resized
 
-    //Define 3 variables to get pixels combination on hat and ,oustache fussion
+    //Define 3 variables to get pixels combination on hat and moustache fussion
     double color_pixel_0, color_pixel_1, color_pixel_2;
+
 
 
     if(! hat.data ) // Check for invalid input image 
@@ -116,8 +117,15 @@ int main(int argc, char *argv[])
             //Add hat and moustache to picture
 	    int facew = face_i.width; //face width
 	    int faceh = face_i.height; //face height
-	    Size hat_size(facew,faceh); //resize hat picture giving same face width 
+        Size hat_size(facew,faceh); //resize hat picture giving same face width (hat picture is squared)
         resize(hat, hat_resized, hat_size );
+
+        Size moustache_size(facew/2,faceh/2); //resize moustache picture giving half face width because moustache pictures is squared
+        resize(moustache, moustache_resized, moustache_size );
+
+        double hat_locate = 0.50; //Variable to move up hat from face position
+        double moustache_locate_y = 0.50; //Variable to move down moustache from face position
+        double moustache_move_x = (facew - moustache_resized.size[0])/2; //Variable to move right moustache from face position
 
 
 	    //Overlay hat and moustache
@@ -127,16 +135,32 @@ int main(int argc, char *argv[])
                 {
 
 
-                    // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
-                    double alpha = hat_resized.at<cv::Vec3b>(j, k)[3] / 255.0;
-                    color_pixel_0 = (hat_resized.at<cv::Vec3b>(j, k)[0] * (alpha)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[0])* (1.0-alpha));
-                    color_pixel_1 = (hat_resized.at<cv::Vec3b>(j, k)[1] * (alpha)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[1])* (1.0-alpha));
-                    color_pixel_2 = (hat_resized.at<cv::Vec3b>(j, k)[2] * (alpha)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[2])* (1.0-alpha));
+                    // determine the opacity of the foregrond pixel, using its fourth (alpha) channel for pictures picture.
+                    double alpha_hat = hat_resized.at<cv::Vec4b>(j, k)[3] / 255.0;
+                    color_pixel_0 = (hat_resized.at<cv::Vec4b>(j, k)[0] * (alpha_hat)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*hat_locate)), (face_i.x +k))[0])* (1.0-alpha_hat));
+                    color_pixel_1 = (hat_resized.at<cv::Vec4b>(j, k)[1] * (alpha_hat)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*hat_locate)), (face_i.x +k))[1])* (1.0-alpha_hat));
+                    color_pixel_2 = (hat_resized.at<cv::Vec4b>(j, k)[2] * (alpha_hat)) + ((img.at<cv::Vec3b>((face_i.y +j-(faceh*hat_locate)), (face_i.x +k))[2])* (1.0-alpha_hat));
 
-                    if((face_i.y +j-(faceh*0.60))>0){
-                        img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[0] = color_pixel_0 ;
-                        img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[1] = color_pixel_1 ;
-                        img.at<cv::Vec3b>((face_i.y +j-(faceh*0.60)), (face_i.x +k))[2] = color_pixel_2 ;
+
+
+                    if((face_i.y +j-(faceh*hat_locate))>0){
+                        img.at<cv::Vec3b>((face_i.y +j-(faceh*hat_locate)), (face_i.x +k))[0] = color_pixel_0 ;
+                        img.at<cv::Vec3b>((face_i.y +j-(faceh*hat_locate)), (face_i.x +k))[1] = color_pixel_1 ;
+                        img.at<cv::Vec3b>((face_i.y +j-(faceh*hat_locate)), (face_i.x +k))[2] = color_pixel_2 ;
+                    }
+
+                    if((j<(faceh/2))&&(k<(facew/2))){
+                        // determine the opacity of the foregrond pixel, using its fourth (alpha) channel for moustache picture.
+                        double alpha_moustache = moustache_resized.at<cv::Vec4b>(j, k)[3] / 255.0;
+                        color_pixel_0 = (moustache_resized.at<cv::Vec4b>(j, k)[0] * (alpha_moustache)) + ((img.at<cv::Vec3b>((face_i.y +j+(faceh*moustache_locate_y)), (face_i.x +k+(moustache_move_x)))[0])* (1.0-alpha_moustache));
+                        color_pixel_1 = (moustache_resized.at<cv::Vec4b>(j, k)[1] * (alpha_moustache)) + ((img.at<cv::Vec3b>((face_i.y +j+(faceh*moustache_locate_y)), (face_i.x +k+(moustache_move_x)))[1])* (1.0-alpha_moustache));
+                        color_pixel_2 = (moustache_resized.at<cv::Vec4b>(j, k)[2] * (alpha_moustache)) + ((img.at<cv::Vec3b>((face_i.y +j+(faceh*moustache_locate_y)), (face_i.x +k+(moustache_move_x)))[2])* (1.0-alpha_moustache));
+
+
+                        img.at<cv::Vec3b>((face_i.y +j+(faceh*moustache_locate_y)), (face_i.x +k+(moustache_move_x)))[0] = color_pixel_0 ;
+                        img.at<cv::Vec3b>((face_i.y +j+(faceh*moustache_locate_y)), (face_i.x +k+(moustache_move_x)))[1] = color_pixel_1 ;
+                        img.at<cv::Vec3b>((face_i.y +j+(faceh*moustache_locate_y)), (face_i.x +k+(moustache_move_x)))[2] = color_pixel_2 ;
+
                     }
 
 
