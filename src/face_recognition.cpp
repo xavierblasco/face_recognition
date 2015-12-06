@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
     //Initialize face detector object
     CascadeClassifier face_detect;
-    face_detect.load("haarcascade_frontalface_default.xml");
+    face_detect.load("../data/haarcascades/haarcascade_frontalface_default.xml");
 
     //camera id . Associated to device number in /dev/videoX
     int cam_id; 
